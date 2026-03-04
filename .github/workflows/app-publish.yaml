@@ -6,8 +6,8 @@ on:
       - v*
 
 jobs:
-  publish:
-    name: Publish
+  build:
+    name: Build
     runs-on: ubuntu-24.04
     if: ${{ contains(github.repository_owner, 'sunlewuyou') }}
     steps:
@@ -68,7 +68,28 @@ jobs:
           mv ${{ steps.proprietarySign.outputs.signedReleaseFile }} build/jellyfin-publish/jellyfin-android-v${{ env.JELLYFIN_VERSION }}-proprietary-release.apk
           mv ${{ steps.proprietaryBundleSign.outputs.signedReleaseFile }} build/jellyfin-publish/jellyfin-android-v${{ env.JELLYFIN_VERSION }}-proprietary-release.aab
           mv app/build/version.txt build/jellyfin-publish/
-      - uses: actions/upload-artifact@v4
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: APKs
-          path: build/jellyfin-publish/*
+          name: Jellyfin-Release-APK
+          path: build/jellyfin-publish/*-release.apk
+  publish:
+    name: Publish Release
+    runs-on: ubuntu-24.04
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Donwload Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: Jellyfin-Release-APK
+          path: artifacts
+      - name: Release
+        run: |
+          wget -O ghr.tar.gz https://github.com/tcnksm/ghr/releases/download/v0.13.0/ghr_v0.13.0_linux_amd64.tar.gz
+          tar -xvf ghr.tar.gz
+          mv ghr*linux_amd64/ghr .
+          mkdir apks
+          find artifacts -name "*.apk" -exec cp {} apks \;
+          ./ghr -delete -t "${{ github.token }}" -n "${{ github.ref_name }}" "${{ github.ref_name }}" apks
