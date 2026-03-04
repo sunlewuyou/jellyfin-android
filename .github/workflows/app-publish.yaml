@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - v*
-  # 手动触发
-  workflow_dispatch:
 
 jobs:
   publish:
@@ -73,4 +71,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: APKs
-          path: '["build/jellyfin-publish/*"]'
+          path: build/jellyfin-publish/*
