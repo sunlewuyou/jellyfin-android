@@ -28,10 +28,7 @@ jobs:
       
       - name: Assemble ONLY release files
         run: |
-          # 明确构建 release 版本，不构建 debug
           ./gradlew assembleLibreRelease assembleProprietaryRelease bundleProprietaryRelease versionTxt
-        # 或者如果只需要签名的 APK，可以只构建 signed APK：
-        # ./gradlew assembleLibreRelease assembleProprietaryRelease bundleProprietaryRelease versionTxt
       
       - name: Sign libre APK
         id: libreSign
@@ -72,14 +69,8 @@ jobs:
       - name: Prepare release archive
         run: |
           mkdir -p build/jellyfin-publish
-          # 只移动 release 版本（包括签名的和不签名的）
-          # 删除 debug APK 的移动，因为我们不构建它们
-          mv app/build/outputs/apk/libre/release/*.apk build/jellyfin-publish/ 2>/dev/null || true
-          mv app/build/outputs/apk/proprietary/release/*.apk build/jellyfin-publish/ 2>/dev/null || true
           mv ${{ steps.libreSign.outputs.signedReleaseFile }} build/jellyfin-publish/jellyfin-android-v${{ env.JELLYFIN_VERSION }}-libre-release.apk
           mv ${{ steps.proprietarySign.outputs.signedReleaseFile }} build/jellyfin-publish/jellyfin-android-v${{ env.JELLYFIN_VERSION }}-proprietary-release.apk
-          mv ${{ steps.proprietaryBundleSign.outputs.signedReleaseFile }} build/jellyfin-publish/jellyfin-android-v${{ env.JELLYFIN_VERSION }}-proprietary-release.aab
-          mv app/build/version.txt build/jellyfin-publish/
       
       - name: Upload artifact
         uses: actions/upload-artifact@v4
